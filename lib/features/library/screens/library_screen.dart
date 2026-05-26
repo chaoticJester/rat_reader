@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../providers/library_provider.dart';
 import '../widgets/book_card.dart';
 import '../../../data/models/book.dart';
+import '../../pdf_reader/screens/pdf_reader_screen.dart';
 
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key});
@@ -67,16 +68,38 @@ class LibraryScreen extends ConsumerWidget {
             )
           : GridView.builder(
               padding: const EdgeInsets.all(16),
-              gridDelegate:
-                  const SliverGridDelegateWithFixedCrossAxisCount(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 3,
-                childAspectRatio: 0.7,
+                childAspectRatio: 0.55,
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
               ),
               itemCount: books.length,
               itemBuilder: (context, index) {
-                return BookCard(book: books[index]);
+                final book = books[index];
+                
+                return BookCard(
+                  book: book,
+                  onTap: () {
+                    // Route based on the book type
+                    if (book.type == BookType.pdf) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => PdfReaderScreen(book: book),
+                        ),
+                      );
+                    } else {
+                      // Temporary placeholder for EPUB/CBZ until you build those screens
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('${book.type.name.toUpperCase()} reader not implemented yet.'),
+                          duration: const Duration(seconds: 2),
+                        ),
+                      );
+                    }
+                  },
+                );
               },
             ),
       floatingActionButton: FloatingActionButton(
