@@ -1,4 +1,6 @@
-enum BookType { pdf, epub, cbz, manga }
+import 'dart:typed_data';
+
+enum BookType { pdf, epub, cbz, cbr, manga }
 
 class Book {
   final String id;
@@ -6,6 +8,7 @@ class Book {
   final String filePath;
   final BookType type;
   final String? coverPath;
+  final Uint8List? fileBytes;
   final int currentPage;
   final int totalPages;
   final DateTime lastRead;
@@ -16,6 +19,7 @@ class Book {
     required this.filePath,
     required this.type,
     this.coverPath,
+    this.fileBytes,
     this.currentPage = 0,
     this.totalPages = 0,
     required this.lastRead,

@@ -6,21 +6,36 @@ import '../providers/library_provider.dart';
 import '../widgets/book_card.dart';
 import '../../../data/models/book.dart';
 import '../../pdf_reader/screens/pdf_reader_screen.dart';
+import '../../cbz_reader/screens/cbz_reader_screen.dart';
 
 class LibraryScreen extends ConsumerWidget {
   const LibraryScreen({super.key});
 
-  Future<void> _pickFile(WidgetRef ref) async {
+  Future<void> _pickFile(WidgetRef ref, BuildContext context) async {
     final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'epub', 'cbz'],
-      withData: true, 
+      type: FileType.any,
+      withData: kIsWeb,
     );
 
     if (result == null) return;
 
     final file = result.files.single;
     final extension = file.extension?.toLowerCase();
+
+    // Reject unsupported formats
+    const supported = ['pdf', 'epub', 'cbz', 'cbr'];
+    if (!supported.contains(extension)) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Unsupported file type: .${extension ?? 'unknown'}\nSupported: PDF, EPUB, CBZ, CBR',
+            ),
+          ),
+        );
+      }
+      return;
+    }
 
     BookType type;
     switch (extension) {
@@ -33,6 +48,9 @@ class LibraryScreen extends ConsumerWidget {
       case 'cbz':
         type = BookType.cbz;
         break;
+      case 'cbr':
+        type = BookType.cbr;
+        break;
       default:
         return;
     }
@@ -44,6 +62,7 @@ class LibraryScreen extends ConsumerWidget {
       title: file.name.replaceAll('.$extension', ''),
       filePath: path,
       type: type,
+      fileBytes: file.bytes,
       lastRead: DateTime.now(),
     );
 
@@ -89,6 +108,13 @@ class LibraryScreen extends ConsumerWidget {
                           builder: (context) => PdfReaderScreen(book: book),
                         ),
                       );
+                    }  else if (book.type == BookType.cbz) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => CbzReaderScreen(book: book),
+                        ),
+                      );
                     } else {
                       // Temporary placeholder for EPUB/CBZ until you build those screens
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -103,7 +129,7 @@ class LibraryScreen extends ConsumerWidget {
               },
             ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => _pickFile(ref),
+        onPressed: () => _pickFile(ref, context),
         child: const Icon(Icons.add),
       ),
     );

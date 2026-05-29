@@ -15,6 +15,8 @@ class BookCard extends StatelessWidget {
         return Icons.book;
       case BookType.cbz:
         return Icons.image;
+      case BookType.cbr:
+        return Icons.image;
       case BookType.manga:
         return Icons.auto_stories;
     }
