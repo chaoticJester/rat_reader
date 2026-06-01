@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rat_reader/features/epub_reader/screens/epub_reader_screen.dart';
 import '../providers/library_provider.dart';
 import '../widgets/book_card.dart';
 import '../../../data/models/book.dart';
@@ -114,6 +115,11 @@ class LibraryScreen extends ConsumerWidget {
                         MaterialPageRoute(
                           builder: (context) => CbzReaderScreen(book: book),
                         ),
+                      );
+                    } else if (book.type == BookType.epub) {
+                      Navigator.push(
+                        context, 
+                        MaterialPageRoute(builder: (context) => EpubReaderScreen(book: book))
                       );
                     } else {
                       // Temporary placeholder for EPUB/CBZ until you build those screens
