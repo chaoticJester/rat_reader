@@ -1,4 +1,7 @@
 import 'package:dio/dio.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:archive/archive.dart';
 import '../models/web_manga.dart';
 
 class MangaRepository {
@@ -81,5 +84,44 @@ class MangaRepository {
     } catch (e) {
       return '';
     }
+  }
+
+  Future<String> downloadChapter(
+    String mangaTitle, Chapter chapter) async {
+    final images = await getChapterImages(chapter.id);
+
+    final dir = await getApplicationDocumentsDirectory();
+    final mangaDir =
+        Directory('${dir.path}/downloads/$mangaTitle');
+    await mangaDir.create(recursive: true);
+
+    final archive = Archive();
+
+    for (int i = 0; i < images.length; i++) {
+      final response = await _dio.get<List<int>>(
+        images[i],
+        options: Options(responseType: ResponseType.bytes),
+      );
+
+      if (response.data == null) continue;
+
+      final fileName =
+          '${i.toString().padLeft(3, '0')}.jpg';
+      archive.addFile(
+        ArchiveFile(fileName, response.data!.length, response.data!),
+      );
+    }
+
+    final zipData = ZipEncoder().encode(archive);
+    final chapterName = chapter.displayTitle
+        .replaceAll(RegExp(r'[^\w\s-]'), '')
+        .trim();
+    final filePath =
+        '${mangaDir.path}/$chapterName.cbz';
+
+    final file = File(filePath);
+    await file.writeAsBytes(zipData!);
+
+    return filePath;
   }
 }

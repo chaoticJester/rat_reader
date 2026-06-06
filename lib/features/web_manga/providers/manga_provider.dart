@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
 import '../../../data/models/web_manga.dart';
 import '../../../data/repositories/manga_repository.dart';
 
@@ -36,3 +37,5 @@ final chapterListProvider =
   final repository = ref.read(mangaRepositoryProvider);
   return repository.getChapters(mangaId);
 });
+
+final downloadProgressProvider = StateProvider.family<double?, String>((ref, chapterId) => null);

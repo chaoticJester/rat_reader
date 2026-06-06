@@ -4,6 +4,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/manga_provider.dart';
 import '../../../data/models/web_manga.dart';
 import 'manga_reader_screen.dart';
+import '../../../data/models/book.dart';
+import '../../library/providers/library_provider.dart';
 
 class MangaDetailScreen extends ConsumerWidget {
   final WebManga manga;
@@ -105,8 +107,83 @@ class MangaDetailScreen extends ConsumerWidget {
                       subtitle: chapter.volume != null
                           ? Text('Volume ${chapter.volume}')
                           : null,
-                      trailing: const Icon(Icons.arrow_forward_ios,
-                          size: 16),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Consumer(
+                            builder: (context, ref, child) {
+                              final progress = ref.watch(
+                                  downloadProgressProvider(chapter.id));
+
+                              if (progress != null) {
+                                return SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: CircularProgressIndicator(
+                                    value: progress == 0 ? null : progress,
+                                    strokeWidth: 2,
+                                  ),
+                                );
+                              }
+
+                              return IconButton(
+                                icon: const Icon(Icons.download),
+                                onPressed: () async {
+                                  ref
+                                      .read(downloadProgressProvider(chapter.id)
+                                          .notifier)
+                                      .state = 0;
+
+                                  try {
+                                    final repository =
+                                        ref.read(mangaRepositoryProvider);
+                                    final filePath =
+                                        await repository.downloadChapter(
+                                      manga.title,
+                                      chapter,
+                                    );
+
+                                    ref.read(downloadProgressProvider(chapter.id).notifier).state = null;
+
+                                    final book = Book(
+                                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                                      title: '${manga.title} - ${chapter.displayTitle}',
+                                      filePath: filePath,
+                                      type: BookType.cbz,
+                                      lastRead: DateTime.now(),
+                                    );
+
+                                    ref.read(libraryProvider.notifier).addBook(book);
+
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              '${chapter.displayTitle} downloaded!'),
+                                        ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    ref
+                                        .read(downloadProgressProvider(chapter.id)
+                                            .notifier)
+                                        .state = null;
+
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Download failed: $e'),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                              );
+                            },
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 16),
+                        ],
+                      ),
                       onTap: () {
                         Navigator.push(
                           context,
